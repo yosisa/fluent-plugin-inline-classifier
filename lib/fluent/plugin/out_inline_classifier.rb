@@ -2,21 +2,10 @@ class Fluent::InlineClassifierOutput < Fluent::Output
   Fluent::Plugin.register_output('inline_classifier', self)
 
   class Classifier
-    def initialize(key, store, type, rules)
+    def initialize(key, store, rules)
       @key = key
       @store = store
-      @type = type
       @rules = rules
-    end
-
-    def parse_value(value)
-      if @type == 'int'
-        value.to_i
-      elsif @type == 'float'
-        value.to_f
-      else
-        value
-      end
     end
 
     def classify(record)
@@ -39,19 +28,19 @@ class Fluent::InlineClassifierOutput < Fluent::Output
   end
 
   class RangeClassifier < Classifier
-    def initialize(key, store, type, rules)
+    def initialize(key, store, rules)
       super
       @rules.keys.each {|name|
         args = @rules[name].split()
-        from = parse_value(args[0])
-        to = parse_value(args[1])
+        from = args[0].to_f
+        to = args[1].to_f
 
         if args[0] == '*'
-          func = lambda {|v| v < to}
+          func = lambda {|v| v.to_f < to}
         elsif args[1] == '*'
-          func = lambda {|v| from <= v}
+          func = lambda {|v| from <= v.to_f}
         else
-          func = lambda {|v| from <= v and v < to}
+          func = lambda {|v| v = v.to_f; from <= v and v < to}
         end
 
         @rules[name] = func
@@ -74,10 +63,9 @@ class Fluent::InlineClassifierOutput < Fluent::Output
     conf.elements.select {|element|
       element.name == 'rule'
     }.each {|element|
-      klass = CLASSIFIERS[element['classifier']]
+      klass = CLASSIFIERS[element['type']]
       key = element['key']
       store = element.fetch('store', key + '_class')
-      type = element['type']
 
       rules = {}
       element.select {|key, value|
@@ -86,7 +74,7 @@ class Fluent::InlineClassifierOutput < Fluent::Output
         rules[key[6..-1]] = element[key]
       }
 
-      @classifiers << klass.new(key, store, type, rules)
+      @classifiers << klass.new(key, store, rules)
     }
   end
 
