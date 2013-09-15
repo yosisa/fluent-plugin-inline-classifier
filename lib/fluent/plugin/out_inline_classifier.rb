@@ -78,7 +78,7 @@ class Fluent::InlineClassifierOutput < Fluent::Output
     }
   end
 
-  def remove_prefix(tag)
+  def strip_tag_prefix(tag)
     if tag.start_with?(@remove_prefix)
       head = tag[@remove_prefix.length]
       return '' if head == nil
@@ -88,7 +88,7 @@ class Fluent::InlineClassifierOutput < Fluent::Output
   end
 
   def emit(tag, es, chain)
-    tag = remove_prefix(tag)
+    tag = strip_tag_prefix(tag)
     tag = tag.length > 0 ? [@add_prefix, tag].join('.') : @add_prefix
 
     es.each {|time, record|

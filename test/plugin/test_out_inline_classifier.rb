@@ -25,15 +25,15 @@ class InlineClassifierOutputTest < Test::Unit::TestCase
   def test_configure
     plugin = create_driver(%[]).instance
     assert_equal 'classified', plugin.add_prefix
-    # assert_equal nil, plugin.remove_prefix
+    assert_equal nil, plugin.remove_prefix
   end
 
-  def test_remove_prefix
+  def test_strip_tag_prefix
     plugin = create_driver.instance
-    assert_equal 'foo', plugin.remove_prefix('foo')
-    assert_equal '', plugin.remove_prefix('raw')
-    assert_equal 'foo', plugin.remove_prefix('raw.foo')
-    assert_equal 'foo.bar', plugin.remove_prefix('raw.foo.bar')
-    assert_equal 'foo.raw.bar', plugin.remove_prefix('foo.raw.bar')
+    assert_equal 'foo', plugin.strip_tag_prefix('foo')
+    assert_equal '', plugin.strip_tag_prefix('raw')
+    assert_equal 'foo', plugin.strip_tag_prefix('raw.foo')
+    assert_equal 'foo.bar', plugin.strip_tag_prefix('raw.foo.bar')
+    assert_equal 'foo.raw.bar', plugin.strip_tag_prefix('foo.raw.bar')
   end
 end
