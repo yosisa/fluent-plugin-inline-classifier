@@ -2,6 +2,10 @@ class Fluent::InlineClassifierOutput < Fluent::Output
   Fluent::Plugin.register_output('inline_classifier', self)
 
   class Classifier
+    attr_accessor :key
+    attr_accessor :store
+    attr_accessor :rules
+
     def initialize(key, store, rules)
       @key = key
       @store = store
@@ -52,6 +56,8 @@ class Fluent::InlineClassifierOutput < Fluent::Output
 
   config_param :add_prefix, :string, :default => 'classified'
   config_param :remove_prefix, :string, :default => nil
+
+  attr_accessor :classifiers
 
   def initialize
     super
