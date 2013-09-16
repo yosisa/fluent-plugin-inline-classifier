@@ -72,6 +72,7 @@ class Fluent::InlineClassifierOutput < Fluent::Output
       klass = CLASSIFIERS[element['type']]
       key = element['key']
       store = element.fetch('store', key + '_class')
+      element.used << 'store'  # To suppress unused configuration warning
 
       rules = {}
       element.select {|key, value|
