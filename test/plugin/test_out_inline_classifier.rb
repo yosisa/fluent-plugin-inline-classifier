@@ -2,7 +2,7 @@ require 'helper'
 
 class ClassifierTest < Test::Unit::TestCase
   def create_classifier
-    rules = {'ok' => lambda {|v| v == 'yes'}, 'ng' => lambda {|v| v == 'no'}}
+    rules = [['ok', lambda {|v| v == 'yes'}], ['ng', lambda {|v| v == 'no'}]]
     Fluent::InlineClassifierOutput::Classifier.new('answer', 'class', rules)
   end
 
@@ -54,16 +54,16 @@ class InlineClassifierOutputTest < Test::Unit::TestCase
     <rule>
       key reqtime
       type range
-      class_fast * 0.1
-      class_normal 0.1 0.5
-      class_slow 0.5 *
+      class1 fast * 0.1
+      class2 normal 0.1 0.5
+      class3 slow 0.5 *
     </rule>
     <rule>
       key status
       store status_type
       type range
-      class_2xx 200 300
-      class_4xx 400 500
+      class10 4xx 400 500
+      class1 2xx 200 300
     </rule>
   ]
 
@@ -87,14 +87,29 @@ class InlineClassifierOutputTest < Test::Unit::TestCase
     assert_equal 'reqtime', classifier.key
     assert_equal 'reqtime_class', classifier.store
     assert_equal 3, classifier.rules.length
-    assert_equal ['fast', 'normal', 'slow'], classifier.rules.keys.sort
+    assert_equal ['fast', 'normal', 'slow'], classifier.rules.map {|x| x[0]}
 
     classifier = plugin.classifiers[1]
     assert_equal Fluent::InlineClassifierOutput::RangeClassifier, classifier.class
     assert_equal 'status', classifier.key
     assert_equal 'status_type', classifier.store
     assert_equal 2, classifier.rules.length
-    assert_equal ['2xx', '4xx'], classifier.rules.keys.sort
+    assert_equal ['2xx', '4xx'], classifier.rules.map {|x| x[0]}
+
+    classifier = create_driver(%[
+      <rule>
+        key reqtime
+        type range
+        class1 ~20ms * 0.02
+        class2 20-100ms 0.02 0.1
+        class3 100ms~ 0.1 *
+      </rule>
+    ]).instance.classifiers[0]
+    assert_equal Fluent::InlineClassifierOutput::RangeClassifier, classifier.class
+    assert_equal 'reqtime', classifier.key
+    assert_equal 'reqtime_class', classifier.store
+    assert_equal 3, classifier.rules.length
+    assert_equal ['~20ms', '20-100ms', '100ms~'], classifier.rules.map {|x| x[0]}
   end
 
   def test_strip_tag_prefix

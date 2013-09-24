@@ -34,8 +34,9 @@ class Fluent::InlineClassifierOutput < Fluent::Output
   class RangeClassifier < Classifier
     def initialize(key, store, rules)
       super
-      @rules.keys.each {|name|
-        args = @rules[name].split()
+      @rules = []
+      rules.each {|name, args|
+        args = args.split()
         from = args[0].to_f
         to = args[1].to_f
 
@@ -47,7 +48,7 @@ class Fluent::InlineClassifierOutput < Fluent::Output
           func = lambda {|v| v = v.to_f; from <= v and v < to}
         end
 
-        @rules[name] = func
+        @rules << [name, func]
       }
     end
   end
@@ -74,14 +75,14 @@ class Fluent::InlineClassifierOutput < Fluent::Output
       store = element.fetch('store', key + '_class')
       element.used << 'store'  # To suppress unused configuration warning
 
-      rules = {}
-      element.select {|key, value|
-        key.start_with?('class_')
-      }.keys.each {|key|
-        rules[key[6..-1]] = element[key]
+      rules = []
+      element.keys.each {|key|
+        if m = /^class(\d+)$/.match(key)
+          rules[m[1].to_i] = element[key].split(' ', 2)
+        end
       }
 
-      @classifiers << klass.new(key, store, rules)
+      @classifiers << klass.new(key, store, rules.compact)
     }
   end
 
