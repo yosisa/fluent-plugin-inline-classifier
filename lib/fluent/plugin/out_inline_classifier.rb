@@ -72,8 +72,8 @@ class Fluent::InlineClassifierOutput < Fluent::Output
     }.each {|element|
       klass = CLASSIFIERS[element['type']]
       key = element['key']
+      element.has_key? 'store'  # To suppress unused configuration warning
       store = element.fetch('store', key + '_class')
-      element.used << 'store'  # To suppress unused configuration warning
 
       rules = []
       element.keys.each {|key|
